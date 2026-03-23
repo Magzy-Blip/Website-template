@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "react-router-dom": "^7.13.1",
+    "react-router-dom": "^7.13.2",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1"
   }
