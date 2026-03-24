@@ -105,6 +105,7 @@ export function App() {
             <button onClick={() => setIsLogin(!isLogin)} className="w-full mt-6 text-sm text-slate-400 hover:text-sky-400">
               {isLogin ? "Need an account? Sign up" : "Have an account? Login"}
             </button>
+        
           </main>
         </div>
       } />

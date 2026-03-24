@@ -38,7 +38,10 @@ export function Landing() {
 
   return (
     <div className="min-h-screen transition-colors duration-500 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white p-6">
-      
+
+      {/*LANDING SEARCH BAR*/}
+      <input type="text" placeholder="Search..." className="fixed bg-white hover:bg-slate-100 focus:ring-2 focus:ring-blue-500 rounded-full py-2 px-4 max-w- shadow-md " />
+
       {/* --- TOP RIGHT DROPDOWN SECTION --- */}
       <div className="fixed top-6 right-6 z-50" ref={dropdownRef}>
         <button 
@@ -47,7 +50,7 @@ export function Landing() {
         >
           {/* User Avatar Icon */}
           <div className="w-8 h-8 bg-gradient-to-tr from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-            JD
+            GLH
           </div>
           <span className="text-sm font-semibold">Account</span>
           <svg className={`w-4 h-4 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,8 +88,11 @@ export function Landing() {
           Dashboard
         </h1>
         <p className="text-slate-500 dark:text-slate-400 max-w-md text-center">
-          You are currently logged in. Your session is protected by SQL-encrypted protocols.
+        
         </p>
+              <button className="w-full mt-6 text-sm text-slate-400 hover:text-sky-400">
+              Terms of service and Privacy policy
+            </button>
       </div>
     </div>
   );
