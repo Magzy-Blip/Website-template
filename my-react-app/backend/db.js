@@ -4,13 +4,12 @@ const path = require('path');
 
 let db;
 
-// Initialize the local file-based database
+// This is where the data is handles (local file storage) and where data is fetched and stored.
 const initDB = async () => {
     db = await open({
         filename: path.join(__dirname, 'database.sqlite'),
         driver: sqlite3.Database
     });
-
     await db.exec(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +52,7 @@ const initDB = async () => {
 
 initDB();
 
-// Export helpers to run queries
+// Queries used to find specific items inside the databases.
 module.exports = {
     run: (sql, params) => db.run(sql, params),
     get: (sql, params) => db.get(sql, params),
