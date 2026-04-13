@@ -1,12 +1,12 @@
 /**
- * Shared password rules for signup, login hints, and reset-password (matches server checks).
+ * Shared password rules for signup..
  */
 export function isValidEmailFormat(email: string): boolean {
   const e = email.trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254;
 }
 
-/** Returns `null` if valid, otherwise a user-facing error string. */
+/** Returns nothing if valid, otherwise a user-facing error string. */
 export function validatePasswordStrength(password: string): string | null {
   if (typeof password !== 'string' || password.length < 8) {
     return 'Password must be at least 8 characters.';

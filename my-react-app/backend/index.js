@@ -393,70 +393,70 @@ const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = stripeSecret ? require('stripe')(stripeSecret) : null;
 
 /**
- * Validates cart line items from the client and converts to integer **pence** per line (GBP).
- * Rejects bad shapes, huge orders, and totals under Stripe’s typical UK card minimum (£0.30).
+ * client item validation aswell as oence conversion.
+ * Rejects unwarranted and messy item selection and makes the user unable to purchase without a minimum 0.30 card payment.
  */
 function normalizeCheckoutLines(lines) {
     if (!Array.isArray(lines) || lines.length === 0) {
-        return { error: 'Cart is empty' };
+        return { error: 'Cart is empty' }; /* checks if the cart has any items and if not retuns empty card text*/
     }
     if (lines.length > 100) {
-        return { error: 'Too many line items' };
+        return { error: 'Too many line items' }; /* checks wether the cart is too full and returns an error to stop website crashing*/
     }
     const out = [];
     let sumPence = 0;
     for (const raw of lines) {
         const name = typeof raw.name === 'string' ? raw.name.trim() : '';
-        const qty = Number(raw.quantity); // whole units only
-        const unit = Number.parseFloat(raw.unitPrice); // GBP per unit from client
+        const qty = Number(raw.quantity); // makes ure calculations only allow whole units
+        const unit = Number.parseFloat(raw.unitPrice); // asigns a price per unit of a customers order*/
         if (!name || name.length > 120) {
             return { error: 'Invalid product name' };
         }
         if (!Number.isFinite(qty) || qty < 1 || qty > 999 || !Number.isInteger(qty)) {
-            return { error: 'Invalid quantity' };
+            return { error: 'Invalid quantity' };/* validates if the quantity is withing a valid range*/
         }
         if (!Number.isFinite(unit) || unit < 0 || unit > 500) {
-            return { error: 'Invalid unit price' };
+            return { error: 'Invalid unit price' };/* checks if unit price is withing a valid range*/
         }
-        const unitPence = Math.round(unit * 100); // Stripe GBP amounts are in pence
+        const unitPence = Math.round(unit * 100); // Stripe GBP amounts are shown in pence.
         if (unitPence < 1) {
             return { error: 'Unit price too low' };
         }
         const linePence = unitPence * qty;
         sumPence += linePence;
         if (sumPence > 99999999) {
-            return { error: 'Order total too large' };
+            return { error: 'Order total too large' }; //checks if the total amount is withing a safety range to stop website crashing
         }
         out.push({ name, quantity: qty, unitPence });
     }
     if (sumPence < 30) {
         return { error: 'Minimum card charge is £0.30 GBP (Stripe). Add more to your cart.' };
     }
-    return { lines: out, sumPence };
+    return { lines: out, sumPence };//if no issues with the items in the cart the program will return a total of said items.
 }
 
-/** Creates a Stripe Checkout Session and returns session.url for a full-page redirect. */
+/** creates the checkout payment making sure its secure. */
 app.post('/api/create-checkout-session', async (req, res) => {
     try {
         if (!stripe) {
             return res.status(503).json({
                 code: 'STRIPE_NOT_CONFIGURED',
                 message:
-                    'Set STRIPE_SECRET_KEY in backend/.env (Dashboard → Developers → API keys → Secret test key).',
+                    'Set STRIPE_SECRET_KEY in backend/.env (Dashboard → Developers → API keys → Secret test key).',//if the key is  not available then the checkout is not able to be completed but the website wont crash.
             });
         }
         const { lines, fulfillment } = req.body || {};
         const parsed = normalizeCheckoutLines(lines);
         if (parsed.error) {
-            return res.status(400).json({ message: parsed.error });
+            return res.status(400).json({ message: parsed.error });//if the checkout session is invalid due to items in cart the website will return an error without crashing.
         }
-        // fulfillment: 'collection' | 'delivery' — stored on the Stripe session for bookkeeping (optional).
+        //picking the form of item travel you would prefer deliever or collection.
         const fulfill =
             fulfillment === 'delivery' || fulfillment === 'collection' ? fulfillment : 'collection';
         const session = await stripe.checkout.sessions.create({
             mode: 'payment', // one-time payment (not subscription)
             payment_method_types: ['card'],
-            // One Stripe line item per validated cart row
+            //this is what the stripe checkout uses to read item item information and price etc.
             line_items: parsed.lines.map((l) => ({
                 quantity: l.quantity,
                 price_data: {
@@ -465,11 +465,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
                     product_data: { name: l.name },
                 },
             })),
-            // Stripe replaces {CHECKOUT_SESSION_ID} in the redirect URL
+            // this is where the user is sent after the demo or successful purchase after the checkout session.
             success_url: `${FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${FRONTEND_URL}/checkout?canceled=1`,
             metadata: { app: 'produce_shop', fulfillment: fulfill },
-        });
+        }); //this is where the checkout session is created replacing the url.
         res.json({ url: session.url });
     } catch (err) {
         console.error('Checkout session error:', err.message);
@@ -477,7 +477,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     }
 });
 
-/** Lets the thank-you page confirm payment_status and read amount_total using the server secret. */
+/** this where the summary of the checkout is created and added to history */
 app.get('/api/checkout-session-summary', async (req, res) => {
     try {
         if (!stripe) {
@@ -489,21 +489,21 @@ app.get('/api/checkout-session-summary', async (req, res) => {
         const sessionId = req.query.session_id;
         if (!sessionId || typeof sessionId !== 'string') {
             return res.status(400).json({ message: 'session_id is required' });
-        }
+        }//this makes sure the payment is successful.
         const s = await stripe.checkout.sessions.retrieve(sessionId);
         if (s.payment_status !== 'paid') {
             return res.status(400).json({ message: 'Payment not completed.' });
-        }
+        }//where data of purchase is stored for later use.
         res.json({
             amount_total: s.amount_total,
             currency: s.currency || 'gbp',
             payment_status: s.payment_status,
-        });
+        });//this will be where the successful session of purchase will be processed 
     } catch (err) {
         console.error('Session summary error:', err.message);
-        res.status(500).json({ message: 'Could not verify session' });
+        res.status(500).json({ message: 'Could not verify session' });//this helps handle errors without crashing the website during the checkout summery.
     }
-});
-
+});//
+//this is where the server is created for the user to gain access to the website.
 const PORT = 5000;
-app.listen(PORT, () => console.log(`🚀 Server: http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(` Server: http://localhost:${PORT}`));

@@ -1,25 +1,11 @@
-/**
- * Central lot / batch ID generation for **large-scale product traceability**.
- *
- * **Format:** `LT-{YYYYMMDD}-{SEQ12}-{PRODUCT}`
- * - **LT** — fixed prefix (“lot trace”) for quick scanning in logs and labels.
- * - **YYYYMMDD** — local calendar **pack day** for time-bucketed reports and expiry workflows.
- * - **SEQ12** — **global** 12-digit zero-padded counter in `localStorage` (unique across **every**
- *   product on the site, monotonic per browser; swap for a DB/Redis atomic sequence in production).
- * - **PRODUCT** — stable short **segment per catalog name** so lots group by SKU line in WMS-style filters;
- *   unknown names fall back to a deterministic alphanumeric segment.
- *
- * IDs sort lexicographically by date, then global intake order, then product family — suitable for
- * high-volume receiving and audit trails. Call **`getNextLotId` only when committing a new listing**
- * so previewing the form does not consume sequence numbers.
- */
 
+//this snippet of code manages the items that are being sold.
 /** Monotonic counter — one increment per new lot issued (all products share this stream). */
 const LOT_SEQUENCE_STORAGE_KEY = 'produce_lot_global_seq_v1';
 
 /**
- * Stable 3–8 character segment per preset produce name (SKU-line grouping at scale).
- * Keep in sync with create-item `<select>` options in `Landing.tsx`.
+ * Stable 3–8 character segment per preset produce name.
+ * Keep in sync with create-item.
  */
 const PRODUCT_SEGMENT: Record<string, string> = {
   Carrot: 'CAR',
@@ -52,7 +38,7 @@ function localYyyymmdd(d = new Date()): string {
 }
 
 /**
- * Local calendar **pack date** as `YYYY-MM-DD` — same calendar day as the lot id’s `YYYYMMDD` segment.
+ * Local calendar pack date is yyyy/mm/dd.
  * Use when saving a listing so pack date is never hand-edited and stays aligned with traceability.
  */
 export function packDateYmdLocal(d = new Date()): string {
@@ -68,7 +54,7 @@ function padSeq(n: number, width: number): string {
 }
 
 /**
- * Resolves the product segment for the lot string (known preset → map; else compact deterministic code).
+ * Resolves the product segment for the lot string.
  */
 export function productSegmentForName(displayName: string): string {
   const mapped = PRODUCT_SEGMENT[displayName];

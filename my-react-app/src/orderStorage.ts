@@ -5,10 +5,10 @@
 import type { CheckoutCartSnapshot, CheckoutLinePayload } from './checkoutTypes';
 import type { FulfillmentMethod, OrderRecord, ProduceListing } from './shopTypes';
 
-/** localStorage key for serialized gallery (ProduceListing[]). */
+/** localStorage key for gallery. */
 const GALLERY_KEY = 'produce_catalog_gallery_v1';
 
-/** localStorage key for completed orders (OrderRecord[]), newest first. */
+/** key for completed orders. */
 const ORDERS_KEY = 'produce_account_orders_v1';
 
 /** sessionStorage: cart + fulfillment saved right before Stripe redirect or demo completion. */
@@ -17,13 +17,13 @@ export const PENDING_CHECKOUT_KEY = 'produce_pending_checkout_v1';
 /** Prevents duplicate order rows if the user refreshes the thank-you page. */
 export const CHECKOUT_RECORDED_KEY = 'checkout_order_recorded_v1';
 
-/** Shape written by Checkout and read by CheckoutSuccess after payment. */
+/** written by Checkout and read by CheckoutSuccess after payment. */
 export interface PendingCheckout extends CheckoutCartSnapshot {
   fulfillment: FulfillmentMethod;
   customerEmail: string | null;
 }
 
-/** Normalize legacy / partial JSON into a full ProduceListing (defaults for missing trace fields). */
+/**if item is empty or unknowwn and empty messege is returned */
 function parseListing(raw: unknown): ProduceListing | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -50,7 +50,7 @@ function parseListing(raw: unknown): ProduceListing | null {
   };
 }
 
-/** Load all gallery listings from localStorage (empty array if missing or corrupt). */
+/** Load all gallery listings from localStorage. */
 export function loadCatalog(): ProduceListing[] {
   try {
     const raw = localStorage.getItem(GALLERY_KEY);
@@ -63,12 +63,12 @@ export function loadCatalog(): ProduceListing[] {
   }
 }
 
-/** Persist the entire gallery whenever listings change (prices, stock, trace fields). */
+/** Persist the entire gallery whenever listings change. */
 export function saveCatalog(items: ProduceListing[]): void {
   localStorage.setItem(GALLERY_KEY, JSON.stringify(items));
 }
 
-/** Read order history (newest orders appear first in the stored array). */
+/** Read order history. */
 export function loadOrders(): OrderRecord[] {
   try {
     const raw = localStorage.getItem(ORDERS_KEY);
@@ -89,13 +89,13 @@ function saveOrders(orders: OrderRecord[]): void {
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 200)));
 }
 
-/** Store checkout payload before leaving the SPA for Stripe (or before demo thank-you). */
+/** Store checkout payload before leaving(or before demo thank-you). */
 export function savePendingCheckout(payload: PendingCheckout): void {
   sessionStorage.removeItem(CHECKOUT_RECORDED_KEY);
   sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(payload));
 }
 
-/** Read pending checkout without removing (used after payment to decide whether to finalize). */
+/** Read pending checkout without removing. */
 export function readPendingCheckout(): PendingCheckout | null {
   try {
     const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
@@ -108,12 +108,12 @@ export function readPendingCheckout(): PendingCheckout | null {
   }
 }
 
-/** Remove pending checkout from sessionStorage (after order is recorded or abandoned). */
+/** Remove items in checkout from sessionStorage. */
 export function clearPendingCheckout(): void {
   sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
 }
 
-/** Convert checkout lines into order history lines (drops fields Stripe does not need). */
+/** Convert checkout lines into order history lines. */
 function toOrderLines(lines: CheckoutLinePayload[]): OrderRecord['lines'] {
   return lines.map((l) => ({
     name: l.name,
@@ -128,7 +128,7 @@ function toOrderLines(lines: CheckoutLinePayload[]): OrderRecord['lines'] {
 
 /**
  * After a successful payment (or demo): append an OrderRecord and subtract sold quantities
- * from matching listings in the saved catalog (by listingId when present).
+ * from matching listings in the saved catalog.
  */
 export function recordCompletedOrder(pending: PendingCheckout, source: 'stripe' | 'demo'): OrderRecord {
   const record: OrderRecord = {
@@ -162,7 +162,7 @@ export function recordCompletedOrder(pending: PendingCheckout, source: 'stripe' 
   return record;
 }
 
-/** Orders visible for “my account” — match email when logged in, else show all stored device orders. */
+/** Orders visible for the account . */
 export function ordersForAccount(email: string | null): OrderRecord[] {
   const all = loadOrders();
   const e = email?.trim().toLowerCase();

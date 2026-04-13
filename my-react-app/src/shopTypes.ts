@@ -1,29 +1,21 @@
-/**
- * Shop domain types: catalog listings with traceability + stock,
- * cart lines carrying trace snapshots, orders, and fulfillment choice.
- */
-
-/** How the customer will receive the order after payment. */
+//traceability for the user to have a clear idea of both comfortability of item tracking and also where its coming from.
 export type FulfillmentMethod = 'collection' | 'delivery';
 
-/**
- * One sellable listing in the gallery — transparent unit price and live availability.
- * Traceability fields support audits: supplier, lot/batch, pack date.
- */
+//this where the items are listed so the user can see item data and purchase.
 export interface ProduceListing {
   id: number;
   name: string;
-  /** Unit price in GBP (string for consistent formatting with sliders / inputs). */
+  /** Unit price in GBP. */
   price: string;
   /** Set when the listing is saved on the server — only this account may delete the listing. */
   createdByEmail?: string | null;
-  /** Units in stock; shown on the card and enforced when adding to cart / at checkout finalization. */
+  /** Units in stock; shown on the card and enforced when adding to cart. */
   stockUnits: number;
   /** Grower, co-op, or distributor name for product traceability. */
   supplier: string;
-  /** Batch / lot code — use `getNextLotId` from `lotNumber.ts` (global date + sequence + product segment). */
+  /** Batch / lot code — set automatically. */
   lotId: string;
-  /** Pack date `YYYY-MM-DD` — set automatically at listing time via `packDateYmdLocal()` in `lotNumber.ts`. */
+  /** Pack date `YYYY-MM-DD` — set automatically. */
   packedOn: string;
 }
 
