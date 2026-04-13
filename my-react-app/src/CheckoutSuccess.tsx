@@ -1,14 +1,3 @@
-/**
- * Post-purchase thank-you page at /checkout/success.
- * Two entry paths:
- * 1) Real Stripe: ?session_id=... — we verify payment with GET /api/checkout-session-summary.
- * 2) Local demo: ?demo=1 — reads total from sessionStorage (no Stripe call).
- *
- * After payment is confirmed (either path), reads **pending checkout** from sessionStorage and:
- * - Appends an **OrderRecord** to local order history (with fulfillment + trace lines).
- * - **Decrements stock** on each listing referenced by listingId (transparent inventory).
- * In both cases we set flags so Landing clears the cart when the user returns.
- */
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -29,39 +18,26 @@ async function syncServerStockFromPending(pending: PendingCheckout | null) {
     try {
       await adjustListingStockOnServer(lid, -line.quantity);
     } catch {
-      /* local catalog already adjusted in recordCompletedOrder */
     }
   }
 }
 
 export function CheckoutSuccess() {
   const [params] = useSearchParams();
-  /** Stripe appends this query param on success_url after payment completes. */
   const sessionId = params.get('session_id');
-  /** Local demo flow sets this; skips Stripe verification. */
   const demo = params.get('demo') === '1';
 
-  /** Formatted order total for display (e.g. "£12.34") once known. */
   const [totalDisplay, setTotalDisplay] = useState<string | null>(null);
-  /** Non-fatal error if session verification fails (network, etc.). */
   const [loadError, setLoadError] = useState<string | null>(null);
-  /** True when user arrived via ?demo=1 — copy explains no charge occurred. */
   const [isDemo, setIsDemo] = useState(false);
-  /**
-   * True while we are calling the backend to confirm a real Stripe session.
-   * Initial value: we need confirmation only when sessionId exists and it is not demo.
-   */
   const [confirming, setConfirming] = useState(() => Boolean(!demo && sessionId));
-  /** Fulfillment method from the completed order (shown on thank-you for clarity). */
   const [fulfillmentLabel, setFulfillmentLabel] = useState<string | null>(null);
 
   useEffect(() => {
-    /* Invalid URL: no session and not demo — do not touch sessionStorage or cart flags. */
     if (!demo && !sessionId) {
       return;
     }
 
-    /* Successful or demo completion: drop persisted checkout draft and tell Landing to empty cart. */
     sessionStorage.removeItem('checkout_cart');
     sessionStorage.setItem('clear_cart_after_checkout', '1');
 
@@ -71,10 +47,6 @@ export function CheckoutSuccess() {
       sessionStorage.removeItem('checkout_demo_total');
       setIsDemo(true);
       setConfirming(false);
-      /**
-       * Record demo order + update inventory from pending snapshot (written on Checkout page).
-       * Idempotent: refreshing the thank-you page must not create duplicate orders.
-       */
       const recordKey = 'demo';
       if (sessionStorage.getItem(CHECKOUT_RECORDED_KEY) !== recordKey) {
         const pending = readPendingCheckout();
@@ -90,7 +62,6 @@ export function CheckoutSuccess() {
       return;
     }
 
-    /* Real payment: retrieve session from Stripe via our backend (secret key stays server-side). */
     let cancelled = false;
     (async () => {
       try {
@@ -103,7 +74,6 @@ export function CheckoutSuccess() {
         }
         const gbp = (Number(data.amount_total) / 100).toFixed(2);
         if (!cancelled) setTotalDisplay(`£${gbp}`);
-        /** Paid: finalize local order history + stock using the pending checkout saved before redirect. */
         if (!cancelled && sessionId) {
           const recordKey = sessionId;
           if (sessionStorage.getItem(CHECKOUT_RECORDED_KEY) !== recordKey) {
@@ -156,7 +126,7 @@ export function CheckoutSuccess() {
     <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center p-8">
       <div className="max-w-md w-full text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-3xl">
-          ✓
+          {'\u2713'}
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Thank you for your purchase!</h1>
         <p className="mt-4 text-slate-400 leading-relaxed">

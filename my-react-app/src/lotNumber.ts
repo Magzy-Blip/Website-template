@@ -1,12 +1,6 @@
 
-//this snippet of code manages the items that are being sold.
-/** Monotonic counter — one increment per new lot issued (all products share this stream). */
 const LOT_SEQUENCE_STORAGE_KEY = 'produce_lot_global_seq_v1';
 
-/**
- * Stable 3–8 character segment per preset produce name.
- * Keep in sync with create-item.
- */
 const PRODUCT_SEGMENT: Record<string, string> = {
   Carrot: 'CAR',
   Broccoli: 'BRO',
@@ -37,10 +31,6 @@ function localYyyymmdd(d = new Date()): string {
   return `${y}${m}${day}`;
 }
 
-/**
- * Local calendar pack date is yyyy/mm/dd.
- * Use when saving a listing so pack date is never hand-edited and stays aligned with traceability.
- */
 export function packDateYmdLocal(d = new Date()): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -53,9 +43,6 @@ function padSeq(n: number, width: number): string {
   return s.length >= width ? s.slice(-width) : s.padStart(width, '0');
 }
 
-/**
- * Resolves the product segment for the lot string.
- */
 export function productSegmentForName(displayName: string): string {
   const mapped = PRODUCT_SEGMENT[displayName];
   if (mapped) return mapped.slice(0, 8);
@@ -70,10 +57,6 @@ export function productSegmentForName(displayName: string): string {
   return `X${tail}`.slice(0, 8);
 }
 
-/**
- * Issues the next globally unique lot id for this product name and **increments** the stored sequence.
- * Safe for high volume: 12-digit counter supports billions of lots per device before rollover planning.
- */
 export function getNextLotId(productDisplayName: string): string {
   const product = productSegmentForName(productDisplayName);
   const date = localYyyymmdd();
@@ -90,7 +73,6 @@ export function getNextLotId(productDisplayName: string): string {
   return `LT-${date}-${padSeq(next, 12)}-${product}`;
 }
 
-/** UI hint: shows the pattern and product segment without consuming a sequence number. */
 export function describeLotIdFormat(productDisplayName: string): string {
   if (!productDisplayName.trim()) return 'Choose produce — a unique lot ID is assigned when you add to the gallery.';
   const seg = productSegmentForName(productDisplayName);

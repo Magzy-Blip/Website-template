@@ -4,7 +4,6 @@ const path = require('path');
 
 let db;
 
-// This is where the data is handles (local file storage) and where data is fetched and stored.
 const initDB = async () => {
     db = await open({
         filename: path.join(__dirname, 'database.sqlite'),
@@ -52,7 +51,6 @@ const initDB = async () => {
 
 initDB();
 
-// Queries used to find specific items inside the databases.
 module.exports = {
     run: (sql, params) => db.run(sql, params),
     get: (sql, params) => db.get(sql, params),

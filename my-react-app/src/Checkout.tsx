@@ -1,24 +1,11 @@
-/**
- * Checkout review page shown at /checkout.
- * - Loads the cart from React Router location.state or sessionStorage (Stripe cancel recovery).
- * - Lets the shopper choose **collection vs delivery** (stored with the order and on Stripe metadata).
- * - Persists a **pending checkout** snapshot before leaving for Stripe so success page can finalize inventory + order history.
- * - Calls POST /api/create-checkout-session to get a Stripe-hosted payment URL.
- * - Never collects card numbers; the user completes payment on Stripe’s site.
- */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { CheckoutCartSnapshot } from './checkoutTypes';
 import type { FulfillmentMethod } from './shopTypes';
 import { clearPendingCheckout, savePendingCheckout } from './orderStorage';
 
-/** Express API origin (must match backend CORS and Vite dev server). */
 const API_BASE = 'http://localhost:5000';
 
-/**
- * Restores the cart snapshot from navigation state (preferred) or sessionStorage fallback.
- * Used when the user returns from Stripe with ?canceled=1 so React state may be empty.
- */
 function loadSnapshot(state: unknown): CheckoutCartSnapshot | null {
   if (state && typeof state === 'object' && 'lines' in state) {
     const s = state as CheckoutCartSnapshot;
@@ -30,12 +17,10 @@ function loadSnapshot(state: unknown): CheckoutCartSnapshot | null {
     const parsed = JSON.parse(raw) as CheckoutCartSnapshot;
     if (Array.isArray(parsed.lines) && parsed.lines.length > 0) return parsed;
   } catch {
-    /* Invalid JSON or missing key — treat as no snapshot. */
   }
   return null;
 }
 
-/** Computes subtotal for one line (quantity × unit price) for the order summary UI. */
 function lineTotal(line: { quantity: number; unitPrice: string }): number {
   const u = Number.parseFloat(line.unitPrice);
   if (!Number.isFinite(u)) return 0;
@@ -46,29 +31,19 @@ export function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  /** Set by Stripe cancel_url (?canceled=1) so we can show a friendly message. */
   const canceled = params.get('canceled') === '1';
 
-  /** Memoized cart payload so we do not re-parse sessionStorage on every render. */
   const snapshot = useMemo(() => loadSnapshot(location.state), [location.state]);
   const [error, setError] = useState<string | null>(null);
-  /** When the API returns STRIPE_NOT_CONFIGURED we show setup hints + optional dev demo. */
   const [stripeCode, setStripeCode] = useState<string | null>(null);
-  /** True while waiting for create-checkout-session before full-page redirect. */
   const [loading, setLoading] = useState(false);
-  /**
-   * Whether the customer will pick up in-store or receive delivery — passed to the backend
-   * (Stripe metadata) and stored in local order history after payment.
-   */
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>('collection');
 
-  /** Sum of all line totals for display and for the Stripe minimum check. */
   const orderTotal = useMemo(() => {
     if (!snapshot) return 0;
     return snapshot.lines.reduce((s, l) => s + lineTotal(l), 0);
   }, [snapshot]);
 
-  /** Stripe card payments in GBP require at least £0.30 — block pay until cart meets this. */
   const belowStripeMinimum = orderTotal > 0 && orderTotal < 0.3;
 
   useEffect(() => {
@@ -89,10 +64,6 @@ export function Checkout() {
     );
   }
 
-  /**
-   * Writes pending checkout to sessionStorage so /checkout/success can record order + inventory
-   * after Stripe redirects back (SPA state would otherwise be lost).
-   */
   function persistPendingForAfterPayment() {
     const snap = snapshot;
     if (!snap) return;
@@ -105,10 +76,6 @@ export function Checkout() {
     });
   }
 
-  /**
-   * Asks the backend to create a Stripe Checkout Session and redirects the browser
-   * to session.url (full navigation so we leave the SPA until Stripe sends the user back).
-   */
   async function startStripeCheckout() {
     if (!snapshot) return;
     setLoading(true);
@@ -144,10 +111,6 @@ export function Checkout() {
     }
   }
 
-  /**
-   * Dev-only path: skips Stripe and goes to the thank-you screen with a demo flag.
-   * Stores order total for display and flags Landing to clear the cart on next visit.
-   */
   function completeDemoThankYou() {
     persistPendingForAfterPayment();
     sessionStorage.setItem('checkout_demo_total', orderTotal.toFixed(2));
@@ -170,7 +133,6 @@ export function Checkout() {
           </p>
         </header>
 
-        {/* Read-only summary of what will be sent to Stripe (prices recomputed server-side). */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Order summary</p>
           <ul className="space-y-3 text-sm border-b border-slate-800 pb-4 mb-4">
@@ -190,7 +152,6 @@ export function Checkout() {
           </div>
         </div>
 
-        {/* Fulfillment choice: stored with the order and sent to Stripe session metadata. */}
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">How do you want your order?</p>
           <div className="grid grid-cols-2 gap-2">
@@ -257,7 +218,6 @@ export function Checkout() {
           {loading ? 'Redirecting…' : 'Pay securely with Stripe'}
         </button>
 
-        {/* Shown only in Vite dev when Stripe env is missing — no real charge. */}
         {import.meta.env.DEV && stripeCode === 'STRIPE_NOT_CONFIGURED' && (
           <button
             type="button"

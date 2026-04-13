@@ -1,4 +1,2 @@
-/*tailwind import thats used throught the code for design handling*/
 @import "tailwindcss";
-/* dark and light theme import */
 @custom-variant dark (&:where(.dark, .dark *));

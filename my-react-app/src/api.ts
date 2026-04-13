@@ -1,7 +1,3 @@
-/**
- * Backend API helpers (SQLite on the server) so **listings and carts sync across devices**.
- * localStorage in `orderStorage.ts` still mirrors catalog for offline-style backup when fetches succeed.
- */
 import type { ProduceListing, ShopCartLine } from './shopTypes';
 
 export const API_BASE = 'http://localhost:5000';
@@ -29,7 +25,6 @@ function parseListingRow(row: Record<string, unknown>): ProduceListing | null {
   };
 }
 
-/** Load all produce listings from the shared server catalog. */
 export async function fetchListingsFromServer(): Promise<ProduceListing[]> {
   const res = await fetch(`${API_BASE}/api/listings`);
   if (!res.ok) throw new Error('Failed to load listings');
@@ -38,7 +33,6 @@ export async function fetchListingsFromServer(): Promise<ProduceListing[]> {
   return rows.map((r) => parseListingRow(r as Record<string, unknown>)).filter((x): x is ProduceListing => x !== null);
 }
 
-/** Create one listing on the server (visible to all devices hitting the same API). */
 export async function postListingToServer(
   item: ProduceListing,
   createdByEmail: string | null,
@@ -64,7 +58,6 @@ export async function postListingToServer(
   }
 }
 
-/** Adjust stock on the server after checkout (negative delta = units sold). */
 export async function adjustListingStockOnServer(listingId: number, delta: number): Promise<void> {
   const res = await fetch(`${API_BASE}/api/listings/${listingId}/stock`, {
     method: 'PATCH',
@@ -77,7 +70,6 @@ export async function adjustListingStockOnServer(listingId: number, delta: numbe
   }
 }
 
-/** Remove a listing from the shared catalog (server checks `created_by_email` matches `email`). */
 export async function deleteListingFromServer(listingId: number, email: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/listings/${listingId}`, {
     method: 'DELETE',
@@ -90,7 +82,6 @@ export async function deleteListingFromServer(listingId: number, email: string):
   }
 }
 
-/** Load server-backed cart for the signed-in email (per-user cart across devices). */
 export async function fetchCartFromServer(email: string): Promise<ShopCartLine[]> {
   const res = await fetch(`${API_BASE}/api/cart?email=${encodeURIComponent(email)}`);
   if (!res.ok) return [];
@@ -104,7 +95,6 @@ export async function fetchCartFromServer(email: string): Promise<ShopCartLine[]
   });
 }
 
-/** Persist cart JSON for this email so another device can load it. */
 export async function saveCartToServer(email: string, cart: ShopCartLine[]): Promise<void> {
   await fetch(`${API_BASE}/api/cart`, {
     method: 'PUT',

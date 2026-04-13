@@ -1,7 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom'
 import { Landing } from './Landing'
-/* Stripe checkout review + post-payment thank-you (see Checkout.tsx / CheckoutSuccess.tsx). */
 import { Checkout } from './Checkout'
 import { CheckoutSuccess } from './CheckoutSuccess'
 import { ResetPassword } from './ResetPassword'
@@ -235,9 +234,7 @@ export function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route path="/landing" element={<Landing />} />
-      {/* Order review; redirects browser to Stripe-hosted payment. */}
       <Route path="/checkout" element={<Checkout />} />
-      {/* Returned after Stripe payment or local demo; verifies session_id when applicable. */}
       <Route path="/checkout/success" element={<CheckoutSuccess />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
