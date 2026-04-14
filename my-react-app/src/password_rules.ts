@@ -1,9 +1,9 @@
-export function isValidEmailFormat(email: string): boolean {
+export function is_valid_email_format(email: string): boolean {
   const e = email.trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254;
 }
 
-export function validatePasswordStrength(password: string): string | null {
+export function validate_password_strength(password: string): string | null {
   if (typeof password !== 'string' || password.length < 8) {
     return 'Password must be at least 8 characters.';
   }
@@ -17,10 +17,10 @@ export function validatePasswordStrength(password: string): string | null {
     return 'Password must include an uppercase letter.';
   }
   if (!/[0-9]/.test(password)) {
-    return 'Password must include a digit.';
+    return 'Password must include a numbe.';
   }
   if (!/[^A-Za-z0-9]/.test(password)) {
-    return 'Password must include a symbol (e.g. !@#$%).';
+    return 'Password must include a special characters like (-@#).';
   }
   return null;
 }

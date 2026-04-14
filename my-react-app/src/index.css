@@ -1,2 +1,5 @@
+/* tailwind import used throuhout the the webiste css design*/
 @import "tailwindcss";
+
+/* dark and light theme import*/
 @custom-variant dark (&:where(.dark, .dark *));

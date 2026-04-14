@@ -1,5 +1,5 @@
 export type FulfillmentMethod = 'collection' | 'delivery';
-
+//these defining structure create the data representation the user sees in the website from the prices and quanitities to supplier and lotnumber.
 export interface ProduceListing {
   id: number;
   name: string;
@@ -42,6 +42,11 @@ export interface OrderRecord {
   fulfillment: FulfillmentMethod;
   total: string;
   lines: OrderLineRecord[];
-  source: 'stripe' | 'demo';
+  source: 'local';
   customerEmail: string | null;
+  buyerName: string;
+  addressLine: string;
+  postcode: string;
+  loyaltyDiscountApplied: boolean;
+  subtotalBeforeDiscount: string;
 }

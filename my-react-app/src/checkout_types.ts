@@ -1,3 +1,4 @@
+//this file contains the types of checkout processes the user would selecy from
 export interface CheckoutLinePayload {
   name: string;
   quantity: number;
