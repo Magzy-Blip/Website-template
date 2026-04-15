@@ -20,7 +20,8 @@ import { all_preset_names, fruit_names, vegetable_names, produce_image_url } fro
 import { get_next_lot_id, pack_date_ymd_local } from './lot_number.ts';
 import type { ProduceListing, ShopCartLine } from './shop_types.ts';
 
-const produce_pricing: Record<string, { fair: number; min: number; max: number }> = {
+//this is the set price ranges that allow the selle to retail produce at a fair price while still allowing for some control ofver the price.
+const produce_pricing: Record<string, { fair: number; min: number; max: number }> = {//
   Carrot: { fair: 0.52, min: 0.35, max: 0.75 },
   Broccoli: { fair: 0.95, min: 0.69, max: 1.25 },
   Spinach: { fair: 1.45, min: 1.09, max: 1.89 },
@@ -43,6 +44,7 @@ const produce_pricing: Record<string, { fair: number; min: number; max: number }
   Avocado: { fair: 0.99, min: 0.69, max: 1.35 },
 };
 
+//This function is used by the search bar to make enterred data comparable and accurate by making inputs a certain format.
 function norm(s: string) {
   return s
     .toLowerCase()
@@ -53,6 +55,7 @@ function norm(s: string) {
     .trim();
 }
 
+//This function is used by the search bar to check if the item being searched matches the item in the website listings.
 function matches(name: string, q_raw: string) {
   const q = norm(q_raw);
   if (!q) return true;
@@ -60,6 +63,7 @@ function matches(name: string, q_raw: string) {
   return q.split(' ').filter(Boolean).every((t) => n.includes(t));
 }
 
+//This function give the search bar give each search results a score that then translates into which item is seen frst based on how high the score is.
 function match_score(name: string, q_raw: string) {
   const q = norm(q_raw);
   const n = norm(name);
@@ -77,17 +81,20 @@ function match_score(name: string, q_raw: string) {
   return score;
 }
 
+//This function is usednto calculate the total price of the item in the carts by using unit price and quantity.
 function line_total(line: ShopCartLine) {
   const u = Number.parseFloat(line.unitPrice);
   return Number.isFinite(u) ? u * line.quantity : 0;
 }
 
+//this fucntion if the user own the produce listing based off their email.
 function is_owner(item: ProduceListing) {
   const me = localStorage.getItem('accountEmail')?.trim().toLowerCase();
   const owner = item.createdByEmail?.trim().toLowerCase();
   return Boolean(me && owner && me === owner);
 }
 
+//Used to load produce from the databse to the website.
 const default_new_item = () => ({
   name: '',
   price: '',
@@ -95,10 +102,12 @@ const default_new_item = () => ({
   supplier: 'Regional Growers Co-op',
 });
 
+//Used to add new produce to the website and save data.
 const field =
   'w-full px-3 py-2 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg outline-none border border-transparent focus:border-sky-500';
 const label = 'block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1';
 
+//this export contains the main logic of the website and helps run th page.
 export function Landing() {
   const navigate = useNavigate();
   const [is_dark, set_is_dark] = useState(() => {
@@ -222,6 +231,7 @@ export function Landing() {
 
   const refresh = useCallback(() => set_items(load_catalog()), []);
 
+  //the useeffect helps save the produce listings as well as othe revents that happen in the web page like cart items etc.
   useEffect(() => {
     save_catalog(items);
   }, [items]);
@@ -283,6 +293,7 @@ export function Landing() {
       on ? 'bg-sky-500 border-sky-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'
     }`;
 
+    //this is the main webpage design that contains all the aspects seen by the user buttons, serach, cart, dashboard etc.
   return (
     <div className="min-h-screen transition-colors duration-500 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white p-6 font-sans">
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 w-full max-w-2xl px-4">
@@ -306,7 +317,7 @@ export function Landing() {
                   }}
                   className={field}
                 >
-                  <option value="" disabled>Choose a fruit or vegetable...</option>
+                  <option value="" disabled>Choose Your Produce</option>
                   <optgroup label="Vegetables">{vegetable_names.map((l) => <option key={l} value={l}>{l}</option>)}</optgroup>
                   <optgroup label="Fruits">{fruit_names.map((l) => <option key={l} value={l}>{l}</option>)}</optgroup>
                 </select>
@@ -314,7 +325,7 @@ export function Landing() {
               {bounds != null && slider_val != null && (
                 <div>
                   <div className="flex justify-between gap-2 mb-1">
-                    <label htmlFor="create-price-range" className={label}>Unit price</label>
+                    <label htmlFor="create-price-range" className={label}>Item price</label>
                     <span className="text-sm font-black text-sky-600 dark:text-sky-400 tabular-nums">£{slider_val.toFixed(2)}</span>
                   </div>
                   <p className="text-[10px] text-slate-500 mb-2">
@@ -367,7 +378,7 @@ export function Landing() {
                   </ul>
                 </div>
               )}
-              <button type="submit" className="w-full py-2 bg-sky-500 text-white text-sm font-bold rounded-lg hover:bg-sky-600 shadow-lg shadow-sky-500/20">Add to gallery</button>
+              <button type="submit" className="w-full py-2 bg-sky-500 text-white text-sm font-bold rounded-lg hover:bg-sky-600 shadow-lg shadow-sky-500/20">Create Listing</button>
             </form>
           )}
         </div>
@@ -391,7 +402,7 @@ export function Landing() {
           {suggest_open && search_query.trim() && (
             <ul id="search-suggest-list" role="listbox" className="absolute left-0 right-0 top-full mt-2 max-h-64 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl py-1 text-sm">
               {suggestions.length === 0 ? (
-                <li className="px-4 py-3 text-slate-500 italic">No matches</li>
+                <li className="px-4 py-3 text-slate-500 italic">Nothing Found</li>
               ) : (
                 suggestions.map(({ name, in_gallery }) => (
                   <li key={name}>
@@ -545,8 +556,7 @@ export function Landing() {
       <div className="mt-32 max-w-6xl mx-auto px-4">
         {items.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center opacity-40">
-            <div className="w-20 h-20 border-2 border-dashed border-slate-400 rounded-full mb-4 flex items-center justify-center text-3xl text-slate-400">+</div>
-            <p className="text-slate-500 italic">Nothing listed yet — use the + button.</p>
+            <p className="text-slate-500 italic">No items.</p>
           </div>
         ) : filtered_items.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
@@ -576,7 +586,7 @@ export function Landing() {
                     <span className="font-semibold text-slate-800 dark:text-slate-200">£{item.price}</span> / unit · {left} to add
                   </p>
                   <div className="mt-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 p-2.5 text-[10px] text-slate-600 dark:text-slate-400">
-                    <p className="font-bold uppercase text-slate-500 mb-1">Traceability</p>
+                    <p className="font-bold uppercase text-slate-500 mb-1">Product inforation</p>
                     <p><span className="font-semibold">Supplier:</span> {item.supplier}</p>
                     <p><span className="font-semibold">Lot:</span> {item.lotId}</p>
                     {item.packedOn ? <p><span className="font-semibold">Packed:</span> {item.packedOn}</p> : null}
@@ -605,7 +615,7 @@ export function Landing() {
                         set_items((p) => p.filter((it) => it.id !== item.id));
                       }}
                       className="mt-3 w-full min-h-[44px] rounded-xl border-2 border-red-500/55 bg-red-50 dark:bg-red-950/35 text-sm font-semibold text-red-800 dark:text-red-100"
-                    >Remove listing</button>
+                    >Remove Item</button>
                   )}
                 </div>
               );

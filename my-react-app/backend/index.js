@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+
 function normalizeEmail(raw) {
     if (typeof raw !== 'string') return null;
     const e = raw.trim().toLowerCase();
@@ -360,112 +361,45 @@ app.put('/api/cart', async (req, res) => {
 });
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
-const stripe = stripeSecret ? require('stripe')(stripeSecret) : null;
 
-function normalizeCheckoutLines(lines) {
-    if (!Array.isArray(lines) || lines.length === 0) {
-        return { error: 'Cart is empty' };
-    }
-    if (lines.length > 100) {
-        return { error: 'Too many line items' };
-    }
-    const out = [];
-    let sumPence = 0;
-    for (const raw of lines) {
-        const name = typeof raw.name === 'string' ? raw.name.trim() : '';
-        const qty = Number(raw.quantity);
-        const unit = Number.parseFloat(raw.unitPrice);
-        if (!name || name.length > 120) {
-            return { error: 'Invalid product name' };
-        }
-        if (!Number.isFinite(qty) || qty < 1 || qty > 999 || !Number.isInteger(qty)) {
-            return { error: 'Invalid quantity' };
-        }
-        if (!Number.isFinite(unit) || unit < 0 || unit > 500) {
-            return { error: 'Invalid unit price' };
-        }
-        const unitPence = Math.round(unit * 100);
-        if (unitPence < 1) {
-            return { error: 'Unit price too low' };
-        }
-        const linePence = unitPence * qty;
-        sumPence += linePence;
-        if (sumPence > 99999999) {
-            return { error: 'Order total too large' };
-        }
-        out.push({ name, quantity: qty, unitPence });
-    }
-    if (sumPence < 30) {
-        return { error: 'Minimum card charge is £0.30 GBP (Stripe). Add more to your cart.' };
-    }
-    return { lines: out, sumPence };
-}
-
-app.post('/api/create-checkout-session', async (req, res) => {
-    try {
-        if (!stripe) {
-            return res.status(503).json({
-                code: 'STRIPE_NOT_CONFIGURED',
-                message:
-                    'Set STRIPE_SECRET_KEY in backend/.env (Dashboard → Developers → API keys → Secret test key).',
-            });
-        }
-        const { lines, fulfillment } = req.body || {};
-        const parsed = normalizeCheckoutLines(lines);
-        if (parsed.error) {
-            return res.status(400).json({ message: parsed.error });
-        }
-        const fulfill =
-            fulfillment === 'delivery' || fulfillment === 'collection' ? fulfillment : 'collection';
-        const session = await stripe.checkout.sessions.create({
-            mode: 'payment',
-            payment_method_types: ['card'],
-            line_items: parsed.lines.map((l) => ({
-                quantity: l.quantity,
-                price_data: {
-                    currency: 'gbp',
-                    unit_amount: l.unitPence,
-                    product_data: { name: l.name },
-                },
-            })),
-            success_url: `${FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${FRONTEND_URL}/checkout?canceled=1`,
-            metadata: { app: 'produce_shop', fulfillment: fulfill },
-        });
-        res.json({ url: session.url });
-    } catch (err) {
-        console.error('Checkout session error:', err.message);
-        res.status(500).json({ message: err.message || 'Could not start checkout' });
-    }
-});
-
-app.get('/api/checkout-session-summary', async (req, res) => {
-    try {
-        if (!stripe) {
-            return res.status(503).json({
-                code: 'STRIPE_NOT_CONFIGURED',
-                message: 'Stripe not configured',
-            });
-        }
-        const sessionId = req.query.session_id;
-        if (!sessionId || typeof sessionId !== 'string') {
-            return res.status(400).json({ message: 'session_id is required' });
-        }
-        const s = await stripe.checkout.sessions.retrieve(sessionId);
-        if (s.payment_status !== 'paid') {
-            return res.status(400).json({ message: 'Payment not completed.' });
-        }
-        res.json({
-            amount_total: s.amount_total,
-            currency: s.currency || 'gbp',
-            payment_status: s.payment_status,
-        });
-    } catch (err) {
-        console.error('Session summary error:', err.message);
-        res.status(500).json({ message: 'Could not verify session' });
-    }
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 const PORT = 5000;
-app.listen(PORT, () => console.log(` Server: http://localhost:${PORT}`));
+const server = app.listen(PORT, () => {
+    console.log(` Server: http://localhost:${PORT}`);
+    console.log('✓ Backend server started successfully');
+    console.log('✓ Health check available at http://localhost:5000/health');
+});
+
+// Handle server errors
+server.on('error', (error) => {
+    console.error('Server error:', error.message);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use`);
+    }
+});
+
+// Log when server is closed
+server.on('close', () => {
+    console.log('Server connection closed');
+});
+
+// Listen for shutdown signals and close server gracefully
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received - beginning graceful shutdown...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received - beginning graceful shutdown...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});

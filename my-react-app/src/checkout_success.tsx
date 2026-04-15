@@ -48,7 +48,7 @@ export function CheckoutSuccess() {
   if (payload === undefined) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center p-8">
-        <p className="text-slate-400 animate-pulse">Loading.</p>
+        <p className="text-slate-400 animate-pulse">Loading</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function CheckoutSuccess() {
   if (payload === null) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center p-8">
-        <p className="text-slate-400 mb-6 text-center max-w-sm">No order data found. Return to the shop and try checkout again.</p>
+        <p className="text-slate-400 mb-6 text-center max-w-sm">Return to the shop and try checkout again.</p>
         <Link
           to="/landing"
           className="px-6 py-3 rounded-xl bg-sky-500 text-slate-900 font-bold hover:bg-sky-400 transition-colors"
@@ -76,9 +76,8 @@ export function CheckoutSuccess() {
           OK
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Thank you for your purchase!</h1>
-        <p className="mt-4 text-slate-400 leading-relaxed">Your order has been saved in this browser.</p>
         <p className="mt-3 text-sm font-semibold text-sky-300/90">
-          Fulfillment: <span className="text-white">{fulfillment_label}</span>
+          Delivery type: <span className="text-white">{fulfillment_label}</span>
         </p>
         {payload.loyalty && (
           <p className="mt-2 text-sm text-emerald-400/90">Loyalty discount applied on this order.</p>

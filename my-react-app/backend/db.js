@@ -3,6 +3,7 @@ const path = require('path');
 
 const database = new DatabaseSync(path.join(__dirname, 'database.sqlite'));
 
+// Adds data to an existing databse and if one doesnt exists it creates one to avoid loss of data.
 database.exec(`
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +43,7 @@ database.exec(`
 `);
 console.log('Local SQLite: database.sqlite file is ready');
 
+// this is the sequence used to manage data flow from and to he databse fetching saving and reading.
 const run = async (sql, params) => {
     const stmt = database.prepare(sql);
     if (params && params.length) stmt.run(...params);

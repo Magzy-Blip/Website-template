@@ -1,6 +1,7 @@
 import type { CheckoutCartSnapshot, CheckoutLinePayload } from './checkout_types.ts';
 import type { FulfillmentMethod, OrderRecord, ProduceListing, ShopCartLine } from './shop_types.ts';
 
+//These constants are used to store and retreived data from the backend databse.
 const gallery_key = 'produce_catalog_gallery_v1';
 const orders_key = 'produce_account_orders_v1';
 const profiles_key = 'produce_account_profiles_v1';
@@ -42,6 +43,7 @@ export interface PurchaseEvent {
   quantity: number;
 }
 
+//These funtions are used to retreive and load data for the users viewing while also acting as a verification step to make sure the data displayed is not unredable ir broken.
 function parse_listing(raw: unknown): ProduceListing | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -119,6 +121,7 @@ export function save_account_profile(email: string, patch: Partial<AccountProfil
   }
 }
 
+//This function creates a key for each user cart and uses it as a saving point so user doesnt lose their items.
 function cart_storage_key(email: string | null): string {
   if (!email?.trim()) return 'produce_cart_guest_v1';
   return `produce_cart_${email.trim().toLowerCase()}_v1`;
@@ -144,6 +147,7 @@ export function save_cart(email: string | null, cart: ShopCartLine[]): void {
   localStorage.setItem(cart_storage_key(email), JSON.stringify(cart));
 }
 
+//this function is used to verify if the data retrieved from the backend is in the correct format.
 function normalize_order(raw: unknown): OrderRecord | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -177,10 +181,12 @@ export function load_orders(): OrderRecord[] {
   }
 }
 
+//This functions saves the order history of the user so ty can refer to it later on.
 function save_orders(orders: OrderRecord[]): void {
   localStorage.setItem(orders_key, JSON.stringify(orders.slice(0, 200)));
 }
 
+//This functions is used by the seller to view who has bought their produce.
 function load_purchase_events(): PurchaseEvent[] {
   try {
     const raw = localStorage.getItem(purchase_events_key);
@@ -197,6 +203,7 @@ function load_purchase_events(): PurchaseEvent[] {
   }
 }
 
+//This functions stores user purchases as (purchase events) so it be referred to later.
 function save_purchase_events(events: PurchaseEvent[]): void {
   localStorage.setItem(purchase_events_key, JSON.stringify(events.slice(0, 2000)));
 }
@@ -228,6 +235,7 @@ export function clear_pending_checkout(): void {
   sessionStorage.removeItem(pending_checkout_key);
 }
 
+//This function is used to covert the checkouts to orders so the seller can view the the order.
 function to_order_lines(lines: CheckoutLinePayload[]): OrderRecord['lines'] {
   return lines.map((l) => ({
     name: l.name,
@@ -297,6 +305,7 @@ export function record_completed_order(pending: PendingCheckout): OrderRecord {
   }
   save_catalog([...by_id.values()]);
 
+  
   const orders = load_orders();
   orders.unshift(record);
   save_orders(orders);

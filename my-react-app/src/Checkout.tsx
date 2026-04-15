@@ -13,6 +13,7 @@ import {
   loyalty_purchases_per_reward,
 } from './order_storage.ts';
 
+//This function allows the user to load the checkout page from their cart or from maybe in future froma link.
 function load_snapshot(state: unknown): CheckoutCartSnapshot | null {
   if (state && typeof state === 'object' && 'lines' in state) {
     const s = state as CheckoutCartSnapshot;
@@ -29,12 +30,14 @@ function load_snapshot(state: unknown): CheckoutCartSnapshot | null {
   return null;
 }
 
+//This fucntion calculates the total price of each item in the checkout page.
 function line_total(line: { quantity: number; unitPrice: string }): number {
   const u = Number.parseFloat(line.unitPrice);
   if (!Number.isFinite(u)) return 0;
   return u * line.quantity;
 }
 
+//this export brings everything together by allwoing the user to see the checkout page information like price, quantity etc
 export function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,6 +71,7 @@ export function Checkout() {
     [subtotal, completed_before],
   );
 
+  //This allows the user to have details automatically fille dout like address if they saved them in their profile.
   useEffect(() => {
     set_buyer_name(profile.displayName || localStorage.getItem('accountDisplayName') || '');
     set_address_line(profile.addressLine);
@@ -88,6 +92,7 @@ export function Checkout() {
     );
   }
 
+  //This function is what allows the user to place the order whilst also vrifying all details have been filled in.
   function place_order() {
     if (!snapshot) return;
     set_error(null);
@@ -103,6 +108,7 @@ export function Checkout() {
     const total_str = order_total.toFixed(2);
     const sub_str = subtotal.toFixed(2);
 
+    //After the order has been carried out this code removes the item from the cart.
     sessionStorage.removeItem('checkout_thankyou');
     save_pending_checkout({
       lines: snapshot.lines,
@@ -121,17 +127,18 @@ export function Checkout() {
     navigate('/checkout/success');
   }
 
+  //main body of the chekout page used display the checkout information.
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-6 flex flex-col items-center">
       <div className="w-full max-w-md mt-8">
         <Link to="/landing" className="text-sm text-sky-400 hover:text-sky-300 font-semibold">
-          Back to shop
+          Continue shopping
         </Link>
 
         <header className="mt-8 mb-6">
           <h1 className="text-2xl font-bold text-white tracking-tight">Checkout</h1>
           <p className="text-sm text-slate-400 mt-2">
-            Orders are completed in this browser. No external payment service is used.
+            Purchase Test
           </p>
         </header>
 
@@ -193,7 +200,7 @@ export function Checkout() {
             {loyalty_applies && (
               <div className="flex justify-between items-baseline text-emerald-400">
                 <span className="text-xs font-bold uppercase tracking-wider">
-                  Loyalty ({loyalty_purchases_per_reward}th purchase, over £{loyalty_min_subtotal_gbp})
+                  Discount ({loyalty_purchases_per_reward}th purchase, over £{loyalty_min_subtotal_gbp})
                 </span>
                 <span className="tabular-nums">-{(loyalty_discount_fraction * 100).toFixed(0)}%</span>
               </div>
@@ -206,7 +213,7 @@ export function Checkout() {
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Fulfillment</p>
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Delievery type</p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -218,7 +225,7 @@ export function Checkout() {
               }`}
             >
               <span className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Collection</span>
-              Pick up in store
+              Pick up at local store
             </button>
             <button
               type="button"
@@ -230,7 +237,7 @@ export function Checkout() {
               }`}
             >
               <span className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Delivery</span>
-              Ship to your address
+              Recieve Item
             </button>
           </div>
         </div>

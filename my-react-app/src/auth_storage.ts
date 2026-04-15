@@ -6,6 +6,7 @@ export interface RegisteredUser {
   password: string;
 }
 
+//This function stores user infomration in the browser storage.
 function load_users(): RegisteredUser[] {
   try {
     const raw = localStorage.getItem(users_key);
@@ -24,10 +25,12 @@ function load_users(): RegisteredUser[] {
   }
 }
 
+//This function saves user information to the browser storage.
 function save_users(users: RegisteredUser[]): void {
   localStorage.setItem(users_key, JSON.stringify(users));
 }
 
+//
 export function register_user(
   name: string,
   email: string,

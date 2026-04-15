@@ -3,6 +3,7 @@ export function is_valid_email_format(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254;
 }
 
+//This is a password strenth check 6 total checks each to comfirming the password is strong enough to be secure.
 export function validate_password_strength(password: string): string | null {
   if (typeof password !== 'string' || password.length < 8) {
     return 'Password must be at least 8 characters.';

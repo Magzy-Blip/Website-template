@@ -1,5 +1,8 @@
 const lot_sequence_storage_key = 'produce_lot_global_seq_v1';
 
+//This file generates lotnumbers for the produce items so they can be traced.
+// the produce is assinged a 3 letter code word that that is used to make the process of producing a lotnumber faster.
+
 const product_segment: Record<string, string> = {
   Carrot: 'CAR',
   Broccoli: 'BRO',
@@ -23,6 +26,7 @@ const product_segment: Record<string, string> = {
   Avocado: 'AVO',
 };
 
+//This function is used to make the lotnumber a fixed length (10char) so it can be stored easily and make tracking more accurate.
 function pad_seq(n: number, width: number): string {
   const s = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.floor(n))).toString();
   return s.length >= width ? s.slice(-width) : s.padStart(width, '0');
@@ -54,6 +58,7 @@ export function get_next_lot_id(product_display_name: string): string {
   if (typeof window === 'undefined') {
     return `${product_segment_for_name(product_display_name)}${pad_seq(1, 7)}`.slice(0, 10);
   }
+
 
   const raw = localStorage.getItem(lot_sequence_storage_key);
   const prev = Number.parseInt(raw ?? '0', 10);

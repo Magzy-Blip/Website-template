@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom'
-import { Landing } from './landing.tsx'
-import { Checkout } from './checkout.tsx'
+import { Landing } from './Landing.tsx'
+import { Checkout } from './Checkout.tsx'
 import { CheckoutSuccess } from './checkout_success.tsx'
 import { ResetPassword } from './reset_password.tsx'
 import { is_valid_email_format, validate_password_strength } from './password_rules.ts'
@@ -10,6 +10,7 @@ import { save_account_profile } from './order_storage.ts'
 
 type auth_form_mode = 'login' | 'signup'
 
+// This export handles the singin forms and the routing to the ladning page.
 export function App() {
   const [form_mode, set_form_mode] = useState<auth_form_mode>('login')
   const [is_loading, set_is_loading] = useState(false)
@@ -78,7 +79,7 @@ export function App() {
       set_is_loading(false)
     }
   }
-
+  //This is the main body of the login and signup page which is also resposible for authenticating routing requests.
   return (
     <Routes>
       <Route
